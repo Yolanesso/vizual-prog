@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "vizual-prog",
+			"path": "../.."
+		},
+		{
+			"name": "src",
+			"path": "../../../visual-programming/src"
+		}
+	],
+	"settings": {}
+}
