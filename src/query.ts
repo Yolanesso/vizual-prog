@@ -60,7 +60,6 @@ export function query<TIn, TOut = TIn>(
 ): (data: TIn[]) => TOut[] {
   const stages = steps.map(step => step.type) as QueryStage[];
   
-  // ВАЖНО: Всегда валидируем последовательность
   validateSequence(stages);
 
   return (data: TIn[]): TOut[] => {

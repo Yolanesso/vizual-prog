@@ -1,14 +1,16 @@
 {
-  "devDependencies": {
-    "@types/node": "^25.2.3",
-    "@vitest/coverage-v8": "^4.0.18",
-    "tsx": "^4.21.0",
-    "typescript": "^5.9.3",
-    "vitest": "^4.0.18"
-  }, 
+  "name": "lab5-query-builder",
+  "version": "1.0.0",
+  "description": "Система типизированных запросов",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
-    "test": "vitest",
-    "test:watch": "vitest --watch",
-    "test:coverage": "vitest run --coverage"
+    "test": "vitest run",
+    "type-check": "tsc --noEmit",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "vitest": "^0.34.0",
+    "typescript": "^5.0.0"
   }
 }
