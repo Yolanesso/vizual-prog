@@ -1,0 +1,182 @@
+.app-container {
+  padding: 15px;
+  background-color: #121212;
+  color: #eeeeee;
+  border: 1px solid #333;
+  margin-top: 10px;
+}
+
+.theme-day, .theme-night {
+  background: #121212;
+  color: #eeeeee;
+}
+
+.search-wrapper {
+  margin-bottom: 20px;
+}
+
+.search-bar {
+  border: 1px solid #444;
+  background: #1e1e1e;
+  padding: 5px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.search-bar input {
+  background: transparent;
+  color: white;
+  border: none;
+  width: 100%;
+  outline: none;
+}
+
+.suggestions {
+  background: #1e1e1e;
+  border: 1px solid #444;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  color: #fff;
+}
+
+.suggestions li {
+  padding: 8px 10px;
+  cursor: pointer;
+  border-bottom: 1px solid #333;
+}
+
+.suggestions li:hover {
+  background: #333;
+}
+
+.weather-header {
+  border-bottom: 1px solid #444;
+  padding-bottom: 15px;
+  margin-bottom: 15px;
+}
+
+.date-main {
+  font-size: 13px;
+  color: #aaa;
+}
+
+.city-name {
+  font-size: 28px;
+  margin: 5px 0;
+}
+
+.current-temp-block {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.temp-main {
+  font-size: 48px;
+  font-weight: bold;
+}
+
+.main-icon {
+  width: 70px;
+  height: 70px;
+}
+
+.hourly-forecast {
+  border: 1px solid #333;
+  padding: 10px;
+  background: #1a1a1a;
+}
+
+.hourly-scroll {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+}
+
+.hourly-item {
+  text-align: center;
+  font-size: 12px;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.detail-card {
+  border: 1px solid #333;
+  padding: 10px;
+  background: #1a1a1a;
+  display: flex;
+  align-items: center;
+}
+
+.daily-forecast {
+  margin-top: 20px;
+  border-top: 1px solid #333;
+}
+
+.daily-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #222;
+}
+
+.day-name {
+  font-size: 13px;
+}
+
+.day-temp {
+  font-weight: bold;
+}
+
+.day-temp-min {
+  color: #888;
+  margin-left: 5px;
+}
+
+.detail-info {
+  margin-left: 15px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.detail-info strong {
+  margin-left: 20px;
+}
+
+.loading {
+  background: #121212;
+  color: #fff;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.error-box {
+  border: 1px solid #f44;
+  padding: 20px;
+  background: #2a1111;
+}
+
+.retry-btn, .mock-btn {
+  padding: 8px 16px;
+  background: #333;
+  color: #fff;
+  border: 1px solid #444;
+  margin-top: 10px;
+}
+
+.retry-btn:hover, .mock-btn:hover {
+  background: #444;
+}

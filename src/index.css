@@ -1,0 +1,32 @@
+:root {
+  font-family: sans-serif;
+  line-height: 1.5;
+  color: #e0e0e0;
+  background-color: #121212;
+}
+
+body {
+  margin: 20px;
+  display: block;
+}
+
+#root {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+button {
+  cursor: pointer;
+}
+
+input {
+  border: 1px solid #444;
+  background: #222;
+  color: #fff;
+  padding: 5px;
+}
