@@ -27,17 +27,26 @@ function App() {
       setPollution(pData);
     } catch (err: any) {
       console.error('Error fetching weather:', err);
+      setError('Не удалось получить данные о погоде. Пожалуйста, проверьте интернет-соединение или попробуйте позже.');
     }
   }, []);
 
   useEffect(() => {
-    const savedCity = localStorage.getItem('lastCity');
-    if (savedCity) {
-      const parsedCity = JSON.parse(savedCity);
-      setCity(parsedCity);
-      loadWeatherData(parsedCity.lat, parsedCity.lon);
-    } else {
-      // По умолчанию Москва
+    try {
+      const savedCity = localStorage.getItem('lastCity');
+      if (savedCity) {
+        const parsedCity = JSON.parse(savedCity);
+        setCity(parsedCity);
+        loadWeatherData(parsedCity.lat, parsedCity.lon);
+      } else {
+        // По умолчанию Москва
+        const moscow = { name: 'Москва', lat: 55.7558, lon: 37.6173, country: 'RU' };
+        setCity(moscow);
+        loadWeatherData(moscow.lat, moscow.lon);
+      }
+    } catch (e) {
+      console.error('Error loading saved city:', e);
+      localStorage.removeItem('lastCity');
       const moscow = { name: 'Москва', lat: 55.7558, lon: 37.6173, country: 'RU' };
       setCity(moscow);
       loadWeatherData(moscow.lat, moscow.lon);
@@ -104,11 +113,11 @@ function App() {
     return <div className="loading">Загрузка...</div>;
   }
 
-  const current = forecast.list[0]!;
+  const current = forecast.list[0];
+  if (!current) return <div className="loading">Ошибка данных</div>;
   const isNight = current.weather[0]?.icon?.endsWith('n');
   const themeClass = isNight ? 'theme-night' : 'theme-day';
 
-  // Группировка по дням
   const dailyData = forecast.list.filter((_, index) => index % 8 === 0).slice(0, 7);
 
   const formatDate = (dt: number) => {
@@ -160,7 +169,7 @@ function App() {
         <div className="hourly-scroll">
           {forecast.list.slice(0, 8).map((item, i) => (
             <div key={i} className="hourly-item">
-              <span className="hourly-time">{i === 0 ? 'Сейчас' : item.dt_txt.split(' ')[1].slice(0, 5)}</span>
+              <span className="hourly-time">{i === 0 ? 'Сейчас' : item.dt_txt.split(' ')[1]?.slice(0, 5) || ''}</span>
               {item.weather[0] && (
                 <img src={getIconUrl(item.weather[0].icon, '2x')} alt="icon" />
               )}

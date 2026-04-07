@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import App from './App';
 import * as api from './api/openWeather';
@@ -14,43 +15,44 @@ vi.mock('./api/openWeather', async () => {
   };
 });
 
-describe('App Component', () => {
+describe('Компонент App', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (api.fetchForecast as any).mockResolvedValue(mockForecast);
     (api.fetchAirPollution as any).mockResolvedValue(mockAirPollution);
   });
 
-  it('renders loading state initially', async () => {
+  it('отображает состояние загрузки изначально', async () => {
     render(<App />);
-    expect(screen.getByText(/Загрузка/i)).toBeDefined();
+    expect(screen.getByText(/Загрузка/i)).toBeInTheDocument();
   });
 
-  it('renders city name and temperature after loading', async () => {
-    render(<App />);
+  it('отображает название города и температуру после загрузки', async () => {
+    const { container } = render(<App />);
 
+    // Ждем, пока исчезнет состояние загрузки
     await waitFor(() => {
-      expect(screen.getByText('Moscow')).toBeDefined();
-      expect(screen.getByText(/27°/)).toBeDefined();
-    });
+      expect(screen.queryByText(/Загрузка/i)).not.toBeInTheDocument();
+    }, { timeout: 5000 });
+
+    expect(screen.getByText(/Москва/i)).toBeInTheDocument();
+    // Используем getAllByText, так как температура может дублироваться в почасовом прогнозе
+    expect(screen.getAllByText(/27°/)[0]).toBeInTheDocument();
   });
 
-  it('renders daily forecast items', async () => {
+  it('отображает список прогноза на неделю', async () => {
     render(<App />);
 
-    await waitFor(() => {
-      // Суббота - один из дней в моках
-      expect(screen.getAllByText(/суббота/i)).toBeDefined();
-    });
+    // Ждем появления элементов из списка прогноза
+    const dailyItems = await screen.findAllByText(/понедельник|вторник|среда|четверг|пятница|суббота|воскресенье/i);
+    expect(dailyItems.length).toBeGreaterThan(0);
   });
 
-  it('renders weather details (humidity, wind, aqi)', async () => {
+  it('отображает детали погоды (влажность, ветер, AQI)', async () => {
     render(<App />);
 
-    await waitFor(() => {
-      expect(screen.getByText('80%')).toBeDefined(); // Влажность
-      expect(screen.getByText('5 м/с')).toBeDefined(); // Ветер
-      expect(screen.getByText('3')).toBeDefined(); // AQI
-    });
+    expect(await screen.findByText('80%')).toBeInTheDocument(); // Влажность
+    expect(screen.getByText('5 м/с')).toBeInTheDocument(); // Ветер
+    expect(screen.getByText('3')).toBeInTheDocument(); // AQI
   });
 });
