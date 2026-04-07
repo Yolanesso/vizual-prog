@@ -9,10 +9,6 @@ interface BookCardProps {
 const BookCard: React.FC<BookCardProps> = ({ title, authors, coverId }) => {
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
 
-  const basePrice = coverId ? (coverId % 1000) + 500 : 990;
-  const discountPercent = coverId ? (coverId % 30) + 10 : 15;
-  const finalPrice = Math.floor(basePrice * (1 - discountPercent / 100));
-
   useEffect(() => {
     if (!coverId) return;
     const fetchCover = async () => {
