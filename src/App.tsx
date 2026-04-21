@@ -1,107 +1,111 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Search, MapPin, Wind, Droplets, Gauge, ShieldAlert } from 'lucide-react';
-import { fetchGeocoding, fetchForecast, fetchAirPollution, getIconUrl } from './api/openWeather';
-import { ForecastResponse, AirPollutionResponse, GeocodingResponse } from './api/types';
+import { useState, useEffect } from 'react';
+import { searchCities, getWeatherForecast, getAirPollution } from './api/openWeather';
+import { WeatherForecastData, AirPollutionData, City } from './api/types';
 import { mockForecast, mockAirPollution } from './api/mocks';
+
+import { WeatherSearch } from './components/WeatherSearch';
+import { WeatherHeader } from './components/WeatherHeader';
+import { HourlyForecast } from './components/HourlyForecast';
+import { WeatherDetails } from './components/WeatherDetails';
+import { WeeklyForecast } from './components/WeeklyForecast';
+
 import './App.css';
 
-const UPDATE_INTERVAL = 3 * 60 * 60 * 1000; // 3 часа
+const MOSCOW: City = { name: 'Москва', lat: 55.7558, lon: 37.6173, country: 'RU' };
+const AUTO_UPDATE_TIME = 3 * 60 * 60 * 1000; // 3 часа
 
 function App() {
-  const [city, setCity] = useState<GeocodingResponse | null>(null);
-  const [forecast, setForecast] = useState<ForecastResponse | null>(null);
-  const [pollution, setPollution] = useState<AirPollutionResponse | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [suggestions, setSuggestions] = useState<GeocodingResponse[]>([]);
+  const [currentCity, setCurrentCity] = useState<City | null>(null);
+  const [weatherData, setWeatherData] = useState<WeatherForecastData | null>(null);
+  const [pollutionData, setPollutionData] = useState<AirPollutionData | null>(null);
 
-  const loadWeatherData = useCallback(async (lat: number, lon: number) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<City[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+
+  const loadAllWeatherData = async (lat: number, lon: number) => {
     try {
-      setError(null);
-      const [fData, pData] = await Promise.all([
-        fetchForecast(lat, lon),
-        fetchAirPollution(lat, lon)
-      ]);
-      setForecast(fData);
-      setPollution(pData);
-    } catch (err: any) {
-      console.error('Error fetching weather:', err);
-      setError('Не удалось получить данные о погоде. Пожалуйста, проверьте интернет-соединение или попробуйте позже.');
+      setErrorMessage(null);
+
+      const weather = await getWeatherForecast(lat, lon);
+      setWeatherData(weather);
+
+      const pollution = await getAirPollution(lat, lon);
+      setPollutionData(pollution);
+
+    } catch (error) {
+      console.error('Ошибка загрузки:', error);
+      setErrorMessage('Не удалось загрузить данные.');
+    }
+  };
+
+  useEffect(() => {
+    const savedCityJson = localStorage.getItem('lastCity');
+
+    if (savedCityJson) {
+      const parsedCity = JSON.parse(savedCityJson);
+      setCurrentCity(parsedCity);
+      loadAllWeatherData(parsedCity.lat, parsedCity.lon);
+    } else {
+      setCurrentCity(MOSCOW);
+      loadAllWeatherData(MOSCOW.lat, MOSCOW.lon);
     }
   }, []);
 
   useEffect(() => {
-    try {
-      const savedCity = localStorage.getItem('lastCity');
-      if (savedCity) {
-        const parsedCity = JSON.parse(savedCity);
-        setCity(parsedCity);
-        loadWeatherData(parsedCity.lat, parsedCity.lon);
-      } else {
-        // По умолчанию Москва
-        const moscow = { name: 'Москва', lat: 55.7558, lon: 37.6173, country: 'RU' };
-        setCity(moscow);
-        loadWeatherData(moscow.lat, moscow.lon);
-      }
-    } catch (e) {
-      console.error('Error loading saved city:', e);
-      localStorage.removeItem('lastCity');
-      const moscow = { name: 'Москва', lat: 55.7558, lon: 37.6173, country: 'RU' };
-      setCity(moscow);
-      loadWeatherData(moscow.lat, moscow.lon);
-    }
-  }, [loadWeatherData]);
+    if (!currentCity) return;
 
-  // Автообновление каждые 3 часа
-  useEffect(() => {
-    if (!city) return;
-    const interval = setInterval(() => {
-      loadWeatherData(city.lat, city.lon);
-    }, UPDATE_INTERVAL);
-    return () => clearInterval(interval);
-  }, [city, loadWeatherData]);
+    const intervalId = setInterval(() => {
+      loadAllWeatherData(currentCity.lat, currentCity.lon);
+    }, AUTO_UPDATE_TIME);
 
-  const handleSearch = async (e: React.FormEvent) => {
+    return () => clearInterval(intervalId);
+  }, [currentCity]);
+
+  const handleCitySearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
-    setLoading(true);
+
+    setIsLoading(true);
     try {
-      const results = await fetchGeocoding(searchQuery);
+      const results = await searchCities(searchQuery);
       setSuggestions(results);
-    } catch (err) {
-      console.error('Search error:', err);
+    } catch (error) {
+      console.error('Ошибка поиска:', error);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const selectCity = (selected: GeocodingResponse) => {
-    setCity(selected);
-    localStorage.setItem('lastCity', JSON.stringify(selected));
+  const handleSelectCity = (city: City) => {
+    setCurrentCity(city);
+    localStorage.setItem('lastCity', JSON.stringify(city));
+
     setSuggestions([]);
     setSearchQuery('');
-    loadWeatherData(selected.lat, selected.lon);
+
+    loadAllWeatherData(city.lat, city.lon);
   };
 
-  if (error && !forecast) {
+  const useDemoData = () => {
+    setWeatherData(mockForecast);
+    setPollutionData(mockAirPollution);
+    setErrorMessage(null);
+  };
+
+  if (errorMessage && !weatherData) {
     return (
       <div className="loading error-container">
         <div className="error-box">
-          <p>{error}</p>
+          <p>{errorMessage}</p>
           <div className="error-actions">
-            <button onClick={() => city && loadWeatherData(city.lat, city.lon)} className="retry-btn">
+            <button onClick={() => currentCity && loadAllWeatherData(currentCity.lat, currentCity.lon)} className="retry-btn">
               Попробовать снова
             </button>
-            <button
-              onClick={() => {
-                setForecast(mockForecast);
-                setPollution(mockAirPollution);
-                setError(null);
-              }}
-              className="mock-btn"
-            >
-              Использовать демо-данные
+            <button onClick={useDemoData} className="mock-btn">
+              Демо-данные
             </button>
           </div>
         </div>
@@ -109,121 +113,71 @@ function App() {
     );
   }
 
-  if (!forecast || !pollution || !city || forecast.list.length === 0 || pollution.list.length === 0) {
-    return <div className="loading">Загрузка...</div>;
+  if (!weatherData || !pollutionData || !currentCity || weatherData.list.length === 0) {
+    return <div className="loading">Загрузка данных...</div>;
   }
 
-  const current = forecast.list[0];
-  if (!current) return <div className="loading">Ошибка данных</div>;
-  const isNight = current.weather[0]?.icon?.endsWith('n');
-  const themeClass = isNight ? 'theme-night' : 'theme-day';
-
-  const dailyData = forecast.list.filter((_, index) => index % 8 === 0).slice(0, 7);
-
-  const formatDate = (dt: number) => {
-    const d = new Date(dt * 1000);
-    return d.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric' });
+  const getWeatherClass = (weatherMain: string) => {
+    const condition = weatherMain.toLowerCase();
+    if (condition === 'clear') return 'weather-clear';
+    if (condition === 'clouds') return 'weather-clouds';
+    if (condition === 'rain') return 'weather-rain';
+    if (condition === 'drizzle') return 'weather-drizzle';
+    if (condition === 'thunderstorm') return 'weather-thunderstorm';
+    if (condition === 'snow') return 'weather-snow';
+    return 'weather-atmosphere';
   };
 
-  const formatDay = (dt: number) => {
-    const d = new Date(dt * 1000);
-    return d.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric' });
+  const currentWeather = weatherData.list[0];
+  if (!currentWeather) {
+    return <div className="loading">Загрузка данных...</div>;
+  }
+
+  const isNight = currentWeather.weather[0]?.icon?.endsWith('n');
+  const weatherMain = currentWeather.weather[0]?.main || 'Clear';
+
+  const themeClass = isNight ? 'theme-night' : 'theme-day';
+  const weatherClass = getWeatherClass(weatherMain);
+
+  const dailyForecast = weatherData.list.filter((_, index) => index % 8 === 0).slice(0, 7);
+
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp * 1000).toLocaleDateString('ru-RU', {
+      weekday: 'long',
+      day: 'numeric'
+    });
   };
 
   return (
-    <div className={`app-container ${themeClass}`}>
-      <div className="search-wrapper">
-        <form onSubmit={handleSearch} className="search-bar">
-          <Search size={20} color="#fff" />
-          <input
-            type="text"
-            placeholder="Поиск города..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          {loading && <div className="spinner-small"></div>}
-        </form>
-        {suggestions.length > 0 && (
-          <ul className="suggestions">
-            {suggestions.map((s, i) => (
-              <li key={i} onClick={() => selectCity(s)}>
-                {s.name}, {s.country} {s.state ? `(${s.state})` : ''}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+    <div className={`app-container ${themeClass} ${weatherClass}`}>
+      <WeatherSearch
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        loading={isLoading}
+        suggestions={suggestions}
+        onSearch={handleCitySearch}
+        onSelectCity={handleSelectCity}
+      />
 
-      <header className="weather-header">
-        <p className="date-main">{formatDate(current.dt)}</p>
-        <h1 className="city-name">{city.name}</h1>
-        <div className="current-temp-block">
-          <span className="temp-main">{Math.round(current.main.temp)}°</span>
-          {current.weather[0] && (
-            <img src={getIconUrl(current.weather[0].icon, '4x')} alt="weather icon" className="main-icon" />
-          )}
-        </div>
-      </header>
+      <WeatherHeader
+        currentWeather={currentWeather}
+        city={currentCity}
+        formatDate={formatDate}
+      />
 
-      <section className="hourly-forecast">
-        <div className="hourly-scroll">
-          {forecast.list.slice(0, 8).map((item, i) => (
-            <div key={i} className="hourly-item">
-              <span className="hourly-time">{i === 0 ? 'Сейчас' : item.dt_txt.split(' ')[1]?.slice(0, 5) || ''}</span>
-              {item.weather[0] && (
-                <img src={getIconUrl(item.weather[0].icon, '2x')} alt="icon" />
-              )}
-              <span className="hourly-temp">{Math.round(item.main.temp)}°</span>
-            </div>
-          ))}
-        </div>
-      </section>
+      <HourlyForecast
+        hourlyList={weatherData.list}
+      />
 
-      <section className="details-grid">
-        <div className="detail-card">
-          <Droplets size={24} />
-          <div className="detail-info">
-            <span>Влажность</span>
-            <strong>{current.main.humidity}%</strong>
-          </div>
-        </div>
-        <div className="detail-card">
-          <Wind size={24} />
-          <div className="detail-info">
-            <span>Ветер</span>
-            <strong>{Math.round(current.wind.speed)} м/с</strong>
-          </div>
-        </div>
-        <div className="detail-card">
-          <Gauge size={24} />
-          <div className="detail-info">
-            <span>Давление</span>
-            <strong>{Math.round(current.main.pressure * 0.750062)} мм</strong>
-          </div>
-        </div>
-        <div className="detail-card">
-          <ShieldAlert size={24} />
-          <div className="detail-info">
-            <span>AQI</span>
-            <strong>{pollution.list[0]!.main.aqi}</strong>
-          </div>
-        </div>
-      </section>
+      <WeatherDetails
+        currentWeather={currentWeather}
+        pollution={pollutionData}
+      />
 
-      <section className="daily-forecast">
-        {dailyData.map((day, i) => (
-          <div key={i} className="daily-item">
-            <span className="day-name">{formatDay(day.dt)}</span>
-            <div className="day-weather">
-              {day.weather[0] && (
-                <img src={getIconUrl(day.weather[0].icon, '2x')} alt="icon" />
-              )}
-              <span className="day-temp">+{Math.round(day.main.temp_max)}°</span>
-              <span className="day-temp-min">{Math.round(day.main.temp_min)}°</span>
-            </div>
-          </div>
-        ))}
-      </section>
+      <WeeklyForecast
+        dailyData={dailyForecast}
+        formatDay={formatDate}
+      />
     </div>
   );
 }

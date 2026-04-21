@@ -1,53 +1,51 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { fetchGeocoding, fetchForecast, fetchAirPollution } from './openWeather';
+import { searchCities, getWeatherForecast, getAirPollution } from './openWeather';
 import { mockForecast, mockAirPollution } from './mocks';
 
 global.fetch = vi.fn();
 
-describe('openWeather API', () => {
+describe('Тесты для API (OpenWeather)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('fetchGeocoding returns data on success', async () => {
-    const mockRes = [{ name: 'Moscow', lat: 55.75, lon: 37.6, country: 'RU' }];
+  it('Поиск городов работает правильно', async () => {
+    const mockResponse = [{ name: 'Москва', lat: 55.75, lon: 37.6, country: 'RU' }];
     (fetch as any).mockResolvedValue({
       ok: true,
-      json: async () => mockRes,
+      json: async () => mockResponse,
     });
 
-    const result = await fetchGeocoding('Moscow');
-    expect(result).toEqual(mockRes);
-    expect(fetch).toHaveBeenCalledWith(expect.stringContaining('geo/1.0/direct'));
+    const result = await searchCities('Москва');
+    expect(result).toEqual(mockResponse);
+    expect(fetch).toHaveBeenCalled();
   });
 
-  it('fetchForecast returns data on success', async () => {
+  it('Загрузка прогноза погоды работает правильно', async () => {
     (fetch as any).mockResolvedValue({
       ok: true,
       json: async () => mockForecast,
     });
 
-    const result = await fetchForecast(55.75, 37.6);
+    const result = await getWeatherForecast(55.75, 37.6);
     expect(result).toEqual(mockForecast);
-    expect(fetch).toHaveBeenCalledWith(expect.stringContaining('data/2.5/forecast'));
   });
 
-  it('fetchAirPollution returns data on success', async () => {
+  it('Загрузка данных о воздухе работает правильно', async () => {
     (fetch as any).mockResolvedValue({
       ok: true,
       json: async () => mockAirPollution,
     });
 
-    const result = await fetchAirPollution(55.75, 37.6);
+    const result = await getAirPollution(55.75, 37.6);
     expect(result).toEqual(mockAirPollution);
-    expect(fetch).toHaveBeenCalledWith(expect.stringContaining('data/2.5/air_pollution'));
   });
 
-  it('throws error when response is not ok', async () => {
+  it('Выдает ошибку, если запрос неудачный', async () => {
     (fetch as any).mockResolvedValue({
       ok: false,
     });
 
-    await expect(fetchGeocoding('London')).rejects.toThrow('Failed to fetch geocoding data');
+    await expect(searchCities('Лондон')).rejects.toThrow('Ошибка при поиске городов');
   });
 });

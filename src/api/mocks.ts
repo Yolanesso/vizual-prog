@@ -1,6 +1,6 @@
-import { ForecastResponse, AirPollutionResponse } from './types';
+import { WeatherForecastData, AirPollutionData } from './types';
 
-export const mockForecast: ForecastResponse = {
+export const mockForecast: WeatherForecastData = {
   list: [
     {
       dt: 1711814400,
@@ -36,7 +36,7 @@ export const mockForecast: ForecastResponse = {
   }
 };
 
-export const mockAirPollution: AirPollutionResponse = {
+export const mockAirPollution: AirPollutionData = {
   list: [
     {
       main: { aqi: 3 },

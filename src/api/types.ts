@@ -1,4 +1,4 @@
-export interface GeocodingResponse {
+export interface City {
   name: string;
   lat: number;
   lon: number;
@@ -6,14 +6,14 @@ export interface GeocodingResponse {
   state?: string;
 }
 
-export interface WeatherCondition {
+export interface Weather {
   id: number;
   main: string;
   description: string;
   icon: string;
 }
 
-export interface ForecastItem {
+export interface WeatherForecastItem {
   dt: number;
   main: {
     temp: number;
@@ -23,7 +23,7 @@ export interface ForecastItem {
     pressure: number;
     humidity: number;
   };
-  weather: WeatherCondition[];
+  weather: Weather[];
   wind: {
     speed: number;
     deg: number;
@@ -31,8 +31,8 @@ export interface ForecastItem {
   dt_txt: string;
 }
 
-export interface ForecastResponse {
-  list: ForecastItem[];
+export interface WeatherForecastData {
+  list: WeatherForecastItem[];
   city: {
     name: string;
     coord: {
@@ -47,7 +47,7 @@ export interface ForecastResponse {
   };
 }
 
-export interface AirPollutionResponse {
+export interface AirPollutionData {
   list: {
     main: {
       aqi: number;
